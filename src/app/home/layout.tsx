@@ -19,8 +19,8 @@ export default function HomeLayout({
           </div>
         </div>
       </header>
-      <main>
-        <div className="container-bar">
+      <aside className="sidebar">
+        <nav>
           <ul>
             <li className="icon-tooltip">
               <i className="bi bi-bar-chart-line"/>
@@ -43,7 +43,9 @@ export default function HomeLayout({
               <span className="tooltip-text">Historial</span>
             </li>
           </ul>
-        </div>
+        </nav>
+      </aside>
+      <main>
         <div className="dynamic-content-container">
           {children}
         </div>

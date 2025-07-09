@@ -46,11 +46,13 @@ export default function Home() {
                     </CardContent>
                 </Card>
             </div>
-                <div className="container-filter">
-                    <div className="icon-tooltip">
+            <div className="filter">
+                <div className="icon-tooltip">
                         <i className="bi bi-filter-square-fill text-white"/>
                         <span className="tooltip-text">Graficar</span>
                     </div>
+            </div>
+                <div className="container-filter">
                     <div className="groups-options">
                         <div className="group-filter">
                         <select name="Movimientos" id="Movimientos" required>

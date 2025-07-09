@@ -1,11 +1,15 @@
+header {
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
 .info-page {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100vw;
-    height: 12vh;
     background: #2C5364;
-    padding: 0 20px;
+    height: 75px;
 }
 
 .content-logo {
@@ -14,19 +18,21 @@
     align-items: center;
 }
 
-.container-bar {
-    min-width: 85px;
+.sidebar {
+    position: fixed;
+    padding: 60px 0;
+    width: 80px;
     text-align: center;
     background: #2C5364;
-    height: 88vh;
+    height: 100vh;
 }
 
-.container-bar ul {
+.sidebar ul {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
-    padding: 1rem 0;
+    padding: 2rem 0;
     gap: 1.5rem;
 }
 
@@ -49,7 +55,7 @@
   transform: translateX(-50%) translateY(80%);
   transition: opacity 0.3s;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .icon-tooltip:hover .tooltip-text,
@@ -75,12 +81,11 @@
 
 .layout-home-container main {
     display: flex;
-    height: 83vh;
+    min-height: 70vh;
 
 }
 
 .layout-home-container main .dynamic-content-container {
-    position: relative;
-    max-width: 90vw;
-    max-height: 83vh;
+    display: flex;
+    margin: 75px 0  0 75px;
 }

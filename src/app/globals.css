@@ -1,8 +1,9 @@
 @import "tailwindcss";
+@import 'bootstrap-icons/font/bootstrap-icons.css';
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #B0D9E7;
 }
 
 @theme inline {
@@ -14,7 +15,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #B0D9E7;
     --foreground: #ededed;
   }
 }
@@ -23,4 +24,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+footer {
+  color: #2C5364;
+  margin-left: 75px;
 }

@@ -32,15 +32,16 @@
   margin: 0 420px 0 0;
 }
 
-.container-filter i {
+.filter i {
   color: #203A43;
   font-size: 30px;
 }
 
-.container-filter .icon-tooltip .tooltip-text {
-  font-size: 18px;
-  z-index: 30;
+.filter .icon-tooltip .tooltip-text {
+  font-size: 16px;
   color: #203A43;
+  left: 220%;
+  top: 5%;
 }
 
 .groups-options {
@@ -97,20 +98,14 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  width: 98%;
   gap: 10px;
 }
 
 .chart {
-    width: 50vw;
+    width: 45vw;
     background: #fff;
-}
-
-.container-home > div:last-child {
-  width: 98%;
 }
 
 .tablet-container {
     width: 100%;
-    max-height: 20vh;
 }
