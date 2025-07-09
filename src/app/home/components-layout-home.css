@@ -1,0 +1,86 @@
+.info-page {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    height: 12vh;
+    background: #2C5364;
+    padding: 0 20px;
+}
+
+.content-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container-bar {
+    min-width: 85px;
+    text-align: center;
+    background: #2C5364;
+    height: 88vh;
+}
+
+.container-bar ul {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 1.5rem;
+}
+
+.icon-tooltip {
+  position: relative;
+}
+
+.icon-tooltip i {
+    font-size: 28px;
+}
+
+.icon-tooltip .tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  left: 150%;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(80%);
+  transition: opacity 0.3s;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.icon-tooltip:hover .tooltip-text,
+.icon-tooltip:focus-within .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+.layout-home-container header h1 {
+    font-size: 18px;
+}
+
+.text-user {
+    font-size: 20px;
+    padding: 0 12px;
+    cursor: pointer;
+}
+
+.text-user i {
+    margin: 0 5px;
+}
+
+.layout-home-container main {
+    display: flex;
+    height: 83vh;
+
+}
+
+.layout-home-container main .dynamic-content-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 83vh;
+}
