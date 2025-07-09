@@ -1,0 +1,90 @@
+.text-login {
+    font-size: 30px;
+    padding: 12px 0;
+}
+
+
+.container-form-login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #203A43;
+    width: 450px;
+    height: 400px;
+    border-radius: 20px;
+}
+
+.control-inputs {
+    position: relative;
+    margin: 20px 0;
+
+}
+
+.control-inputs input {
+    width: 300px;
+    padding: 12px 18px;
+    font-size: 16px;
+    border-radius: 20px;
+    border: 1px solid;
+}
+
+.control-inputs label {
+    justify-items: center;
+    position: absolute;
+    left: 8px;
+    top: 12px;
+    padding: 0 10px;
+    transition: 0.2s ease all;
+    pointer-events: none;
+}
+
+.control-inputs input:focus + label,
+.control-inputs input:not(:placeholder-shown) + label {
+    top: -8px;
+    font-size: 14px;
+}
+
+.control-inputs input:focus, input:not(:placeholder-shown) {
+    outline: none;
+    border-bottom: 1px solid;
+    border-top: none;
+}
+
+.btn-login {
+    background: #0F2027;
+    font-size: 18px;
+    width: 150px;
+    border-radius: 8px;
+    padding: 6px 0;
+}
+
+.btn-login:hover {
+    background: #152e39;
+    cursor: pointer;
+}
+
+.text-forgot-password:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 17px;
+}
+
+footer {
+    color: #0F2027;
+}
+
+@media (max-width: 768px) {
+    .container-form-login {
+        width: 60vw;
+        height: 40vh;
+    }
+
+    .control-inputs input {
+        width: 50vw;
+    }
+
+    .text-login {
+        font-size: 28px;
+    }
+}
