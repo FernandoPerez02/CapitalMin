@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: capitalmin
+      POSTGRES_PASSWORD: capitalmin
+      POSTGRES_DB: capitalmin
+    ports:
+      - "5432:5432"
+    volumes:
+      - capitalmin_pg_data:/var/lib/postgresql/data
+
+volumes:
+  capitalmin_pg_data:

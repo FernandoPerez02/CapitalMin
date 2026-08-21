@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  OWNER
+  MEMBER
+}
+
+enum MovementType {
+  Ingreso
+  Egreso
+  Transferencia
+}
+
+enum WalletType {
+  CHECKING
+  SAVINGS
+  CASH
+  DIGITAL
+  INVESTMENT
+}
+
+enum MovementStatus {
+  Programado
+  Pendiente
+  Confirmado
+  Procesado
+  Rechazado
+  Revertido
+}
+
+enum ObligationStatus {
+  PENDIENTE
+  PAGADA
+}
+
+enum CardType {
+  DEBIT
+  CREDIT
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships   AccountMember[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Account {
+  id        String   @id @default(uuid())
+  name      String
+  currency  String   @default("COP")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     AccountMember[]
+  categories  Category[]
+  movements   Movement[]
+  budgets     Budget[]
+  goals       Goal[]
+  obligations Obligation[]
+  wallets     Wallet[]
+  cards       Card[]
+  debts       Debt[]
+
+  @@map("accounts")
+}
+
+model Wallet {
+  id             String     @id @default(uuid())
+  accountId      String
+  name           String
+  type           WalletType @default(CHECKING)
+  currency       String     @default("COP")
+  initialBalance Decimal    @default(0) @db.Decimal(14, 2)
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  movements Movement[]
+  cards     Card[]
+
+  @@unique([accountId, name])
+  @@map("wallets")
+}
+
+/// Tarjeta débito: walletId obligatorio (el gasto es el de esa wallet).
+/// Tarjeta crédito: sin walletId; su saldo (Σ compras - Σ pagos) es derivado,
+/// igual que el resto de saldos del sistema — ver CardsService.getBalance.
+model Card {
+  id            String   @id @default(uuid())
+  accountId     String
+  walletId      String?
+  name          String
+  type          CardType
+  creditLimit   Decimal? @db.Decimal(14, 2)
+  cutoffDay     Int?
+  paymentDueDay Int?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  wallet    Wallet?    @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  movements Movement[]
+
+  @@unique([accountId, name])
+  @@map("cards")
+}
+
+model AccountMember {
+  accountId String
+  userId    String
+  role      AccountRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([accountId, userId])
+  @@map("account_members")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  accountId String
+  parentId  String?
+  name      String
+  createdAt DateTime @default(now())
+
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  parent      Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[]   @relation("CategoryHierarchy")
+  movements   Movement[]
+  budgets     Budget[]
+  obligations Obligation[]
+
+  /// Nota: Postgres trata cada NULL como distinto, así que esta constraint no
+  /// evita nombres duplicados entre categorías raíz (parentId = null); esa
+  /// validación la hace CategoriesService.create antes de insertar.
+  @@unique([accountId, parentId, name])
+  @@index([accountId, parentId])
+  @@map("categories")
+}
+
+model Movement {
+  id                 String         @id @default(uuid())
+  accountId          String
+  /// Nullable: una compra con tarjeta de crédito no toca ninguna wallet
+  /// todavía (ver Card). Toda otra transacción sí requiere wallet.
+  walletId           String?
+  cardId             String?
+  categoryId         String?
+  date               DateTime
+  typeMovement       MovementType
+  description        String
+  amount             Decimal        @db.Decimal(14, 2)
+  status             MovementStatus @default(Pendiente)
+  reversedMovementId String?        @unique
+  /// Solo se usa cuando typeMovement = Transferencia. Presente = esta fila es
+  /// la pierna de destino (dinero entrante) y apunta a la pierna de origen.
+  /// Ausente = esta fila es la pierna de origen (dinero saliente) — esto
+  /// también cubre el pago de una tarjeta de crédito: una sola fila con
+  /// walletId + cardId y sin transferPairId (sale de la wallet, no es un
+  /// nuevo gasto porque el gasto real ya se contó en la compra original).
+  transferPairId     String?        @unique
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  account           Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  wallet            Wallet?            @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  card              Card?              @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  category          Category?          @relation(fields: [categoryId], references: [id])
+  reversedMovement  Movement?          @relation("MovementReversal", fields: [reversedMovementId], references: [id])
+  reversedBy        Movement?          @relation("MovementReversal")
+  transferPair      Movement?          @relation("MovementTransfer", fields: [transferPairId], references: [id])
+  transferredBy     Movement?          @relation("MovementTransfer")
+  goalContribution  GoalContribution?
+  obligationPayment ObligationPayment?
+  debtPayment       DebtPayment?
+
+  @@index([accountId, date])
+  @@index([walletId, date])
+  @@index([cardId, date])
+  @@map("movements")
+}
+
+model Budget {
+  id          String         @id @default(uuid())
+  accountId   String
+  categoryId  String?
+  date        DateTime
+  period      String
+  description String
+  amount      Decimal        @db.Decimal(14, 2)
+  status      MovementStatus @default(Pendiente)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([accountId, period])
+  @@map("budgets")
+}
+
+model Goal {
+  id                  String   @id @default(uuid())
+  accountId           String
+  name                String
+  emoji               String
+  targetAmount        Decimal  @db.Decimal(14, 2)
+  monthlyContribution Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  account       Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contributions GoalContribution[]
+
+  @@index([accountId])
+  @@map("goals")
+}
+
+/// currentAmount de Goal es derivado: Σ GoalContribution.amount. No se
+/// almacena en Goal para no duplicar información (ver Movement/Wallet).
+model GoalContribution {
+  id         String   @id @default(uuid())
+  goalId     String
+  amount     Decimal  @db.Decimal(14, 2)
+  date       DateTime
+  movementId String?  @unique
+  createdAt  DateTime @default(now())
+
+  goal     Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  movement Movement? @relation(fields: [movementId], references: [id])
+
+  @@index([goalId, date])
+  @@map("goal_contributions")
+}
+
+/// Unifica lo que antes eran FixedExpense (recurrente) y UpcomingPayment
+/// (puntual): "qué debo pagar y cuándo" (spec sección 14). recurrenceDayOfMonth
+/// presente = recurrente (dueDate es la próxima ocurrencia, se recalcula al
+/// pagar); ausente = puntual (dueDate fijo, status pasa a PAGADA al pagar).
+model Obligation {
+  id                   String           @id @default(uuid())
+  accountId            String
+  categoryId           String?
+  name                 String
+  amount               Decimal          @db.Decimal(14, 2)
+  typeMovement         MovementType
+  dueDate              DateTime
+  recurrenceDayOfMonth Int?
+  status               ObligationStatus @default(PENDIENTE)
+  isActive             Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  account  Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category?           @relation(fields: [categoryId], references: [id])
+  payments ObligationPayment[]
+
+  @@index([accountId, dueDate])
+  @@map("obligations")
+}
+
+model ObligationPayment {
+  id           String   @id @default(uuid())
+  obligationId String
+  movementId   String   @unique
+  amount       Decimal  @db.Decimal(14, 2)
+  paidAt       DateTime @default(now())
+
+  obligation Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  movement   Movement   @relation(fields: [movementId], references: [id])
+
+  @@index([obligationId])
+  @@map("obligation_payments")
+}
+
+/// Saldo pendiente, capital pagado, intereses pagados y % pagado son
+/// derivados de DebtPayment (Regla: no duplicar lo que se puede calcular).
+model Debt {
+  id           String   @id @default(uuid())
+  accountId    String
+  name         String
+  principal    Decimal  @db.Decimal(14, 2)
+  interestRate Decimal  @db.Decimal(6, 4)
+  termMonths   Int
+  startDate    DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account  Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  payments DebtPayment[]
+
+  @@index([accountId])
+  @@map("debts")
+}
+
+model DebtPayment {
+  id               String   @id @default(uuid())
+  debtId           String
+  movementId       String   @unique
+  amount           Decimal  @db.Decimal(14, 2)
+  principalPortion Decimal  @db.Decimal(14, 2)
+  interestPortion  Decimal  @db.Decimal(14, 2)
+  date             DateTime
+
+  debt     Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  movement Movement @relation(fields: [movementId], references: [id])
+
+  @@index([debtId, date])
+  @@map("debt_payments")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
